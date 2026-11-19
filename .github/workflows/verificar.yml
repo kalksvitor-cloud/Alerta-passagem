@@ -1,0 +1,39 @@
+name: Alerta de passagens
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # a cada 30 min responde suas mensagens no Telegram
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: alerta-passagens
+  cancel-in-progress: false
+jobs:
+  rodar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Responder mensagens do Telegram
+        run: python passagens.py mensagens
+      - name: Verificar alertas (08h e 20h de Brasília, ou rodando à mão)
+        run: |
+          HORA=$(TZ=America/Sao_Paulo date +%H); MIN=$(date +%M)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { { [ "$HORA" = "08" ] || [ "$HORA" = "20" ]; } && [ "$MIN" -lt 30 ]; }; then
+            python passagens.py verificar
+          else
+            echo "Fora do horário de verificação ($HORA h)."
+          fi
+      - name: Salvar alertas e histórico
+        if: always()
+        run: |
+          git config user.name "alerta-bot"
+          git config user.email "alerta-bot@users.noreply.github.com"
+          git add alertas.json historico.json estado.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "Atualiza alertas e histórico" && git push)
