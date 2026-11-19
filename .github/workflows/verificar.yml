@@ -36,4 +36,4 @@ jobs:
           git config user.name "alerta-bot"
           git config user.email "alerta-bot@users.noreply.github.com"
           git add alertas.json historico.json estado.json 2>/dev/null || true
-          git diff --cached --quiet || (git commit -m "Atualiza alertas e histórico" && git push)
+          git diff --cached --quiet || (git commit -m "Atualiza alertas e histórico" && git pull --rebase && git push)

@@ -3,6 +3,21 @@
 Busca preços no Google Flights (que junta GOL, Azul, LATAM e agências), guarda o histórico
 e te avisa no Telegram quando a passagem fica abaixo do preço que você quer ou cai bastante.
 
+## O site (Vercel, grátis)
+
+A pasta `public/` é o site (pesquisar passagens, ver preço por dia, criar e apagar avisos) e `api/app.py`
+é o servidor. Hospedagem na Vercel, ligada a este repositório. Variáveis de ambiente do projeto na Vercel:
+
+| Nome | O que é |
+|---|---|
+| `SERPAPI_KEY` | chave do SerpApi |
+| `SITE_SENHA` | uma senha sua, pra ninguém mais usar o site (e gastar suas buscas) |
+| `GITHUB_REPO` | `kalksvitor-cloud/Alerta-passagem` |
+| `GITHUB_ALERTAS_TOKEN` | token do GitHub com permissão de escrita em *Contents* só deste repositório |
+
+Os avisos criados no site são gravados no `alertas.json` deste repositório, e o robô do GitHub Actions
+confere e manda no Telegram.
+
 ## 1. O que você precisa criar (uns 10 minutos, tudo grátis)
 
 **a) Bot do Telegram**

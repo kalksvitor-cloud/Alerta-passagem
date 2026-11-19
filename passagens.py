@@ -30,6 +30,7 @@ import os
 import random
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -164,14 +165,37 @@ def _link_google(origem, destino, ida, volta):
     return "https://www.google.com/travel/flights?hl=pt-BR&curr=BRL&q=" + urllib.parse.quote(q)
 
 
+def buscar_datas(origem, destino, datas_ida, volta=None) -> dict:
+    """Busca várias datas em paralelo. Retorna {data: resultado} (datas sem voo ficam de fora)."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=min(8, len(datas_ida))) as ex:
+        res = list(ex.map(lambda d: buscar_voos(origem, destino, d, volta), datas_ida))
+    return {d: r for d, r in zip(datas_ida, res) if r["voos"]}
+
+
 def melhor_preco(origem, destino, datas_ida, volta=None):
     """Busca em todas as datas e devolve (data, resultado) com o menor preço."""
-    melhor = None
-    for d in datas_ida:
-        res = buscar_voos(origem, destino, d, volta)
-        if res["voos"] and (melhor is None or res["voos"][0]["preco"] < melhor[1]["voos"][0]["preco"]):
-            melhor = (d, res)
-    return melhor
+    todos = buscar_datas(origem, destino, datas_ida, volta)
+    if not todos:
+        return None
+    d = min(todos, key=lambda k: todos[k]["voos"][0]["preco"])
+    return d, todos[d]
+
+
+def links_outros_sites(origem, destino, ida, volta=None) -> dict:
+    """Links prontos pra conferir a mesma busca em outros sites."""
+    o, d = origem.split(",")[0], destino.split(",")[0]
+    yymmdd = lambda x: dt.date.fromisoformat(x).strftime("%y%m%d")  # noqa: E731
+    sky = f"https://www.skyscanner.com.br/transporte/passagens-aereas/{o.lower()}/{d.lower()}/{yymmdd(ida)}/"
+    kayak = f"https://www.kayak.com.br/flights/{o}-{d}/{ida}"
+    if volta:
+        sky += f"{yymmdd(volta)}/"
+        kayak += f"/{volta}"
+    return {
+        "Google Flights": _link_google(origem, destino, ida, volta),
+        "Skyscanner": sky,
+        "Kayak": kayak + "?sort=price_a",
+    }
 
 
 # --------------------------------------------------------------------------
@@ -188,12 +212,61 @@ def _gravar(path: Path, dados):
     path.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# Quando roda no site (Vercel), os alertas ficam no próprio repositório do GitHub,
+# lidos e gravados pela API. Assim o site e o robô do GitHub Actions usam a mesma lista.
+GH_TOKEN = os.environ.get("GITHUB_ALERTAS_TOKEN", "").strip()
+GH_REPO = os.environ.get("GITHUB_REPO", "").strip()
+_gh_sha: dict[str, str] = {}
+
+
+def _gh(metodo, caminho, corpo=None):
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{GH_REPO}/contents/{caminho}",
+        data=json.dumps(corpo).encode() if corpo else None, method=metodo,
+        headers={"Authorization": f"Bearer {GH_TOKEN}", "Accept": "application/vnd.github+json",
+                 "User-Agent": "alerta-passagens"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.load(r)
+
+
+def _ler_repo(nome, padrao):
+    import base64
+    try:
+        d = _gh("GET", nome)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return padrao
+        raise
+    _gh_sha[nome] = d["sha"]
+    return json.loads(base64.b64decode(d["content"]).decode("utf-8"))
+
+
+def _gravar_repo(nome, dados, mensagem):
+    import base64
+    corpo = {"message": mensagem,
+             "content": base64.b64encode(json.dumps(dados, ensure_ascii=False, indent=2).encode()).decode()}
+    if nome in _gh_sha:
+        corpo["sha"] = _gh_sha[nome]
+    _gh_sha[nome] = _gh("PUT", nome, corpo)["content"]["sha"]
+
+
 def carregar_alertas() -> list[dict]:
+    if GH_TOKEN and GH_REPO:
+        return _ler_repo("alertas.json", [])
     return _ler(ALERTAS_FILE, [])
 
 
 def salvar_alertas(alertas):
+    if GH_TOKEN and GH_REPO:
+        return _gravar_repo("alertas.json", alertas, "Atualiza alertas pelo site")
     _gravar(ALERTAS_FILE, alertas)
+
+
+def carregar_historico() -> dict:
+    if GH_TOKEN and GH_REPO:
+        return _ler_repo("historico.json", {})
+    return _ler(HISTORICO_FILE, {})
 
 
 def expandir_datas(spec: str) -> list[str]:
@@ -287,7 +360,10 @@ def formatar_resultado(origem, destino, ida, volta, res, limite=5) -> str:
         linhas.append(f"• <b>{brl(v['preco'])}</b> {', '.join(v['cias'])} {hora} · {esc} {dur}".rstrip())
     if res.get("insight"):
         linhas.append(f"📊 {res['insight']}")
-    linhas.append(f'<a href="{res["link"]}">Ver no Google Flights</a> · fonte: {res["fonte"]}')
+    outros = links_outros_sites(origem, destino, ida, volta)
+    outros["Google Flights"] = res["link"]
+    linhas.append(" · ".join(f'<a href="{u}">{n}</a>' for n, u in outros.items()))
+    linhas.append(f"fonte: {res['fonte']}")
     return "\n".join(linhas)
 
 

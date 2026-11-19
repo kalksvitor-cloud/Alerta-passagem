@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voo Barato</title>
+<meta name="theme-color" content="#0b5cff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone.svg">
+<style>
+  :root {
+    --azul: #0b5cff; --azul-claro: #e8efff; --verde: #0a8a4a; --verde-claro: #e3f5ea;
+    --texto: #15181e; --suave: #5f6673; --borda: #e2e5ea; --fundo: #f5f6f8; --card: #fff;
+    --raio: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --texto: #eef0f3; --suave: #9aa2ae; --borda: #2a2f37; --fundo: #0f1115; --card: #181b21;
+            --azul-claro: #16224a; --verde-claro: #12301f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: var(--fundo); color: var(--texto); padding-bottom: env(safe-area-inset-bottom); }
+  header { background: var(--azul); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 18px 14px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 2px 0 0; opacity: .85; font-size: 14px; }
+  main { max-width: 760px; margin: 0 auto; padding: 14px; }
+  .abas { display: flex; gap: 8px; margin-bottom: 14px; }
+  .abas button { flex: 1; padding: 10px; border-radius: 999px; border: 1px solid var(--borda);
+                 background: var(--card); color: var(--texto); font-weight: 600; font-size: 15px; }
+  .abas button.ativa { background: var(--azul); border-color: var(--azul); color: #fff; }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: var(--raio); padding: 14px; margin-bottom: 12px; }
+  .linha { display: flex; gap: 10px; }
+  .linha > * { flex: 1; min-width: 0; }
+  label { display: block; font-size: 13px; color: var(--suave); margin: 0 0 4px; font-weight: 600; }
+  input { width: 100%; padding: 11px 12px; font-size: 16px; border-radius: 10px; border: 1px solid var(--borda);
+          background: var(--fundo); color: var(--texto); }
+  .campo { margin-bottom: 12px; }
+  .troca { flex: 0 0 44px; align-self: end; height: 44px; border-radius: 10px; border: 1px solid var(--borda);
+           background: var(--fundo); color: var(--texto); font-size: 18px; }
+  .chk { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; font-size: 15px; }
+  .chk input { width: 20px; height: 20px; }
+  .btn { width: 100%; padding: 13px; border: 0; border-radius: 12px; background: var(--azul); color: #fff;
+         font-size: 17px; font-weight: 700; }
+  .btn:disabled { opacity: .6; }
+  .btn.sec { background: var(--azul-claro); color: var(--azul); }
+  .btn.peq { width: auto; padding: 8px 12px; font-size: 14px; }
+  .aviso { background: #fff4d6; color: #6b4e00; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; }
+  .erro { background: #fde5e5; color: #8a1010; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .titulo { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
+  .sub { color: var(--suave); font-size: 14px; }
+  .dias { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 6px; align-items: flex-end; }
+  .dia { flex: 0 0 auto; width: 56px; text-align: center; font-size: 12px; color: var(--suave); cursor: pointer; }
+  .dia .barra { background: var(--azul-claro); border-radius: 6px 6px 2px 2px; margin: 0 auto 4px; width: 100%; }
+  .dia.melhor .barra { background: var(--verde); }
+  .dia.sel { color: var(--texto); font-weight: 700; }
+  .dia b { display: block; color: var(--texto); font-size: 12px; }
+  .voo { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--borda); }
+  .voo:first-of-type { border-top: 0; }
+  .preco { font-size: 20px; font-weight: 800; }
+  .voo.top .preco { color: var(--verde); }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--verde-claro); color: var(--verde); font-weight: 700; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .links a { padding: 8px 12px; border-radius: 999px; border: 1px solid var(--borda); text-decoration: none;
+             color: var(--azul); font-weight: 600; font-size: 14px; }
+  .insight { background: var(--azul-claro); border-radius: 10px; padding: 8px 12px; font-size: 14px; margin: 8px 0; }
+  .alerta { display: flex; gap: 10px; align-items: center; }
+  .alerta .info { flex: 1; min-width: 0; }
+  .rem { border: 0; background: none; color: var(--suave); font-size: 22px; padding: 6px; }
+  svg.spark { width: 100%; height: 40px; display: block; margin-top: 6px; }
+  .vazio { text-align: center; color: var(--suave); padding: 24px 8px; }
+  .carregando { text-align: center; padding: 28px; color: var(--suave); }
+  .spin { width: 28px; height: 28px; border: 3px solid var(--borda); border-top-color: var(--azul); border-radius: 50%;
+          animation: g 0.8s linear infinite; margin: 0 auto 10px; }
+  @keyframes g { to { transform: rotate(360deg); } }
+  .esconde { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>✈️ Voo Barato</h1>
+  <p>Pesquise passagens e receba alerta no Telegram quando baixar</p>
+</header>
+<main>
+  <div class="abas">
+    <button id="aba-buscar" class="ativa" onclick="aba('buscar')">Pesquisar</button>
+    <button id="aba-alertas" onclick="aba('alertas')">Meus avisos 🔔</button>
+  </div>
+
+  <section id="tela-buscar">
+    <form class="card" id="form" autocomplete="off">
+      <div class="linha campo">
+        <div><label for="origem">De</label><input id="origem" list="cidades" placeholder="BH, CNF..." required></div>
+        <button type="button" class="troca" onclick="trocar()" aria-label="Trocar origem e destino">⇄</button>
+        <div><label for="destino">Para</label><input id="destino" list="cidades" placeholder="Curitiba, CWB..." required></div>
+      </div>
+      <div class="linha campo">
+        <div><label for="ida" id="lbl-ida">Ida</label><input id="ida" type="date" required></div>
+        <div id="box-ate" class="esconde"><label for="ate">Até</label><input id="ate" type="date"></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="flex" onchange="flexivel()"> Datas flexíveis (acha o dia mais barato)</label>
+      <label class="chk"><input type="checkbox" id="idavolta" onchange="idaVolta()"> Ida e volta</label>
+      <div class="campo esconde" id="box-volta"><label for="volta">Volta</label><input id="volta" type="date"></div>
+      <button class="btn" id="btn-buscar">Pesquisar</button>
+    </form>
+    <div id="resultado"></div>
+  </section>
+
+  <section id="tela-alertas" class="esconde">
+    <form class="card" id="form-aviso" autocomplete="off">
+      <div class="titulo" style="margin-bottom:10px">Criar aviso</div>
+      <div class="linha campo">
+        <div><label for="a-origem">De</label><input id="a-origem" list="cidades" required></div>
+        <div><label for="a-destino">Para</label><input id="a-destino" list="cidades" placeholder="Curitiba..." required></div>
+      </div>
+      <div class="linha campo">
+        <div><label for="a-ida">Ida a partir de</label><input id="a-ida" type="date" required></div>
+        <div><label for="a-ate">Até (opcional)</label><input id="a-ate" type="date"></div>
+      </div>
+      <div class="linha campo">
+        <div><label for="a-volta">Volta (opcional)</label><input id="a-volta" type="date"></div>
+        <div><label for="a-preco">Quero pagar até (R$)</label><input id="a-preco" type="number" inputmode="numeric" placeholder="400" required></div>
+      </div>
+      <button class="btn" id="btn-aviso">Criar aviso</button>
+      <div class="sub" style="margin-top:8px">Com "Até", ele procura o dia mais barato nesse intervalo (máx. 15 dias). Cada dia gasta uma busca do seu plano grátis.</div>
+    </form>
+    <div class="sub" style="margin:0 2px 10px">O robô confere seus avisos às 8h e às 20h e manda no Telegram quando o preço baixa.</div>
+    <div id="lista-alertas"></div>
+  </section>
+
+  <datalist id="cidades">
+    <option value="CNF · Belo Horizonte"><option value="PLU · Belo Horizonte Pampulha">
+    <option value="GRU,CGH · São Paulo"><option value="GRU · São Paulo Guarulhos"><option value="CGH · São Paulo Congonhas">
+    <option value="VCP · Campinas"><option value="GIG,SDU · Rio de Janeiro"><option value="GIG · Rio Galeão"><option value="SDU · Rio Santos Dumont">
+    <option value="CWB · Curitiba"><option value="FLN · Florianópolis"><option value="POA · Porto Alegre"><option value="IGU · Foz do Iguaçu">
+    <option value="BSB · Brasília"><option value="GYN · Goiânia"><option value="SSA · Salvador"><option value="REC · Recife">
+    <option value="FOR · Fortaleza"><option value="NAT · Natal"><option value="MCZ · Maceió"><option value="JPA · João Pessoa">
+    <option value="BPS · Porto Seguro"><option value="VIX · Vitória"><option value="MAO · Manaus"><option value="BEL · Belém">
+    <option value="CGB · Cuiabá"><option value="CGR · Campo Grande"><option value="UDI · Uberlândia"><option value="MOC · Montes Claros">
+    <option value="EZE,AEP · Buenos Aires"><option value="SCL · Santiago"><option value="LIS · Lisboa"><option value="MCO · Orlando"><option value="MIA · Miami">
+  </datalist>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const brl = (v) => v == null ? "—" : "R$ " + Math.round(v).toLocaleString("pt-BR");
+const dataBR = (iso) => { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
+const diaSemana = (iso) => ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(iso + "T12:00").getDay()];
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let ultimaBusca = null;
+
+// Aceita "CNF · Belo Horizonte", "bh" ou "CNF"
+const codigo = (txt) => { const m = txt.match(/^([A-Z,]{3,})\s·/) || txt.match(/\(([A-Z,]+)\)\s*$/); return m ? m[1] : txt.trim(); };
+
+async function api(acao, params = {}, corpo) {
+  const qs = new URLSearchParams({ acao, ...params });
+  const r = await fetch("/api/app?" + qs, {
+    method: corpo ? "POST" : "GET",
+    headers: { "Content-Type": "application/json", "X-Senha": localStorage.getItem("senha") || "" },
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  if (r.status === 401) {
+    const s = prompt("Digite a senha do site:");
+    if (s == null) throw new Error("Precisa da senha para usar o site.");
+    localStorage.setItem("senha", s.trim());
+    return api(acao, params, corpo);
+  }
+  const j = await r.json().catch(() => ({ erro: "Resposta inválida do servidor" }));
+  if (!r.ok) throw new Error(j.erro || "Erro " + r.status);
+  return j;
+}
+
+function aba(qual) {
+  for (const n of ["buscar", "alertas"]) {
+    $("aba-" + n).classList.toggle("ativa", n === qual);
+    $("tela-" + n).classList.toggle("esconde", n !== qual);
+  }
+  if (qual === "alertas") carregarAlertas();
+}
+function trocar() { const o = $("origem").value; $("origem").value = $("destino").value; $("destino").value = o; }
+function flexivel() { const f = $("flex").checked; $("box-ate").classList.toggle("esconde", !f); $("lbl-ida").textContent = f ? "Ida a partir de" : "Ida"; }
+function idaVolta() { $("box-volta").classList.toggle("esconde", !$("idavolta").checked); }
+function carregando(msg) { return `<div class="card carregando"><div class="spin"></div>${msg}</div>`; }
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let data = $("ida").value;
+  if ($("flex").checked) {
+    const ate = $("ate").value;
+    if (!ate) return alertaErro("Escolha até que dia procurar.");
+    const dias = (new Date(ate) - new Date(data)) / 864e5;
+    if (dias < 0 || dias > 14) return alertaErro("A faixa de datas pode ter no máximo 15 dias.");
+    if (dias > 0) data += ":" + ate;
+  }
+  const params = { origem: codigo($("origem").value), destino: codigo($("destino").value), data };
+  if ($("idavolta").checked && $("volta").value) params.volta = $("volta").value;
+  localStorage.setItem("ultima", JSON.stringify({ o: $("origem").value, d: $("destino").value }));
+  await buscar(params);
+});
+
+async function buscar(params) {
+  const n = params.data.includes(":") ? Math.round((new Date(params.data.split(":")[1]) - new Date(params.data.split(":")[0])) / 864e5) + 1 : 1;
+  $("btn-buscar").disabled = true;
+  $("resultado").innerHTML = carregando(n > 1 ? `Pesquisando ${n} dias...` : "Pesquisando as passagens mais baratas...");
+  try {
+    const r = await api("buscar", params);
+    ultimaBusca = { params, r };
+    mostrar(r, params);
+  } catch (err) { alertaErro(err.message); }
+  finally { $("btn-buscar").disabled = false; }
+}
+
+function alertaErro(msg) { $("resultado").innerHTML = `<div class="erro">⚠️ ${esc(msg)}</div>`; }
+
+function mostrar(r, params) {
+  if (!r.melhor) { $("resultado").innerHTML = `<div class="card vazio">Nenhum voo encontrado para essa busca.</div>`; return; }
+  const m = r.melhor;
+  let h = "";
+  if (m.fonte.includes("EXEMPLO")) h += `<div class="aviso">Preços de exemplo: falta configurar a chave do SerpApi no site.</div>`;
+
+  if (r.dias.length > 1) {
+    const max = Math.max(...r.dias.map((d) => d.preco)), min = Math.min(...r.dias.map((d) => d.preco));
+    h += `<div class="card"><div class="titulo">Preço por dia</div><div class="sub">O dia mais barato está em verde</div><div class="dias">`;
+    for (const d of r.dias) {
+      const alt = 30 + 70 * (d.preco - min) / Math.max(1, max - min);
+      h += `<div class="dia ${d.preco === min ? "melhor" : ""} ${d.data === m.data ? "sel" : ""}">
+              <b>${brl(d.preco).replace("R$ ", "")}</b><div class="barra" style="height:${alt}px"></div>
+              ${dataBR(d.data).slice(0, 5)}<br>${diaSemana(d.data)}</div>`;
+    }
+    h += `</div></div>`;
+  }
+
+  h += `<div class="card"><div class="titulo">${esc(r.origem)} → ${esc(r.destino)}</div>
+        <div class="sub">${diaSemana(m.data)}, ${dataBR(m.data)}${r.volta ? " · volta " + dataBR(r.volta) : " · só ida"}</div>`;
+  if (m.insight) h += `<div class="insight">📊 ${esc(m.insight)}</div>`;
+  m.voos.forEach((v, i) => {
+    const hora = v.saida ? v.saida.slice(-5) : "";
+    const cheg = v.chegada ? " → " + v.chegada.slice(-5) : "";
+    const dur = v.duracao_min ? `${Math.floor(v.duracao_min / 60)}h${String(v.duracao_min % 60).padStart(2, "0")}` : "";
+    const escalas = v.escalas === 0 ? "direto" : v.escalas + (v.escalas > 1 ? " escalas" : " escala");
+    h += `<div class="voo ${i === 0 ? "top" : ""}"><div><div><b>${esc(v.cias.join(", "))}</b> ${i === 0 ? '<span class="tag">mais barato</span>' : ""}</div>
+          <div class="sub">${hora}${cheg} · ${escalas}${dur ? " · " + dur : ""}</div></div><div class="preco">${brl(v.preco)}</div></div>`;
+  });
+  h += `<div class="links">${Object.entries(m.links).map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join("")}</div>
+        <div class="sub" style="margin-top:8px">Os preços podem mudar no site da companhia. Fonte: ${esc(m.fonte)}</div></div>`;
+
+  const sugestao = Math.floor(m.voos[0].preco * 0.9 / 10) * 10;
+  h += `<div class="card"><div class="titulo">🔔 Me avise quando baixar</div>
+        <div class="sub" style="margin-bottom:10px">Você recebe no Telegram quando ficar abaixo desse valor.</div>
+        <div class="linha"><div><label for="alvo">Preço máximo (R$)</label><input id="alvo" type="number" inputmode="numeric" value="${sugestao}"></div></div>
+        <div style="margin-top:12px"><button class="btn sec" id="btn-alerta" onclick="criarAlerta()">Criar aviso</button></div></div>`;
+  $("resultado").innerHTML = h;
+}
+
+async function criarAlerta() {
+  const { params } = ultimaBusca;
+  const btn = $("btn-alerta");
+  btn.disabled = true; btn.textContent = "Criando...";
+  try {
+    await api("criar", {}, { origem: params.origem, destino: params.destino, datas: params.data,
+                              volta: params.volta || null, preco_max: Number($("alvo").value) || null });
+    btn.textContent = "✅ Aviso criado! Veja em Meus avisos";
+  } catch (err) { btn.disabled = false; btn.textContent = "Criar aviso"; alert(err.message); }
+}
+
+function spark(hist) {
+  if (hist.length < 2) return "";
+  const ps = hist.map((h) => h.preco), min = Math.min(...ps), max = Math.max(...ps);
+  const pts = ps.map((p, i) => `${(i / (ps.length - 1)) * 300},${36 - 32 * (p - min) / Math.max(1, max - min)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 300 40" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--azul)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+async function carregarAlertas() {
+  $("lista-alertas").innerHTML = carregando("Carregando seus avisos...");
+  try {
+    const lista = await api("alertas");
+    if (!lista.length) { $("lista-alertas").innerHTML = `<div class="card vazio">Nenhum aviso ainda. Crie o primeiro aí em cima.</div>`; return; }
+    $("lista-alertas").innerHTML = lista.map((a) => {
+      const datas = a.datas.includes(":") ? a.datas.split(":").map(dataBR).join(" a ") : dataBR(a.datas);
+      const ult = a.ultimo ? `Último preço: <b>${brl(a.ultimo.preco)}</b> (${dataBR(a.ultimo.data)})` : "Ainda não verificado";
+      const bom = a.ultimo && a.preco_max && a.ultimo.preco <= a.preco_max;
+      return `<div class="card"><div class="alerta"><div class="info">
+          <div class="titulo">${esc(a.origem)} → ${esc(a.destino)} ${bom ? '<span class="tag">abaixo do alvo!</span>' : ""}</div>
+          <div class="sub">${datas}${a.volta ? " · volta " + dataBR(a.volta) : ""} · alvo ${brl(a.preco_max)}</div>
+          <div class="sub">${ult}${a.minimo ? " · menor já visto " + brl(a.minimo) : ""}</div></div>
+          <button class="rem" onclick="removerAlerta(${a.id})" aria-label="Apagar alerta">🗑️</button></div>${spark(a.historico)}</div>`;
+    }).join("");
+  } catch (err) { $("lista-alertas").innerHTML = `<div class="erro">⚠️ ${esc(err.message)}</div>`; }
+}
+
+$("form-aviso").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let datas = $("a-ida").value;
+  const ate = $("a-ate").value;
+  if (ate && ate !== datas) {
+    const dias = (new Date(ate) - new Date(datas)) / 864e5;
+    if (dias < 0 || dias > 14) return alert("O intervalo pode ter no máximo 15 dias.");
+    datas += ":" + ate;
+  }
+  const btn = $("btn-aviso"); btn.disabled = true; btn.textContent = "Criando...";
+  try {
+    await api("criar", {}, { origem: codigo($("a-origem").value), destino: codigo($("a-destino").value), datas,
+                              volta: $("a-volta").value || null, preco_max: Number($("a-preco").value) || null });
+    $("a-destino").value = ""; $("a-preco").value = "";
+    carregarAlertas();
+  } catch (err) { alert(err.message); }
+  finally { btn.disabled = false; btn.textContent = "Criar aviso"; }
+});
+
+async function removerAlerta(id) {
+  if (!confirm("Apagar este aviso?")) return;
+  try { await api("remover", {}, { id }); carregarAlertas(); } catch (err) { alert(err.message); }
+}
+
+// Valores iniciais
+(() => {
+  const hoje = new Date(); hoje.setDate(hoje.getDate() + 30);
+  const iso = (d) => d.toISOString().slice(0, 10);
+  $("ida").value = iso(hoje);
+  const ate = new Date(hoje); ate.setDate(ate.getDate() + 6); $("ate").value = iso(ate);
+  const volta = new Date(hoje); volta.setDate(volta.getDate() + 5); $("volta").value = iso(volta);
+  const min = iso(new Date()); for (const id of ["ida", "ate", "volta"]) $(id).min = min;
+  const u = JSON.parse(localStorage.getItem("ultima") || "null");
+  $("origem").value = u ? u.o : "CNF · Belo Horizonte";
+  $("a-origem").value = "CNF · Belo Horizonte"; $("a-ida").value = iso(hoje); $("a-ida").min = min; $("a-ate").min = min; $("a-volta").min = min;
+  $("destino").value = u ? u.d : "CWB · Curitiba";
+})();
+</script>
+</body>
+</html>
