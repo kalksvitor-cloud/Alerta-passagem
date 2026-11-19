@@ -1,1 +1,12 @@
-{}
+{
+  "1": {
+    "registros": [
+      {
+        "quando": "2026-11-19T20:14",
+        "data": "2026-12-18",
+        "preco": 1020.0
+      }
+    ],
+    "ultimo_alerta": null
+  }
+}
