@@ -35,6 +35,13 @@ import urllib.request
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
+
+# Tira espaços/quebras de linha que às vezes vêm junto ao colar as chaves.
+for _k in ("SERPAPI_KEY", "TELEGRAM_TOKEN", "TELEGRAM_CHAT_ID"):
+    if _k in os.environ:
+        os.environ[_k] = os.environ[_k].strip()
+        if not os.environ[_k]:
+            del os.environ[_k]
 ALERTAS_FILE = Path(os.environ.get("ALERTAS_FILE", BASE / "alertas.json"))
 HISTORICO_FILE = Path(os.environ.get("HISTORICO_FILE", BASE / "historico.json"))
 ESTADO_FILE = Path(os.environ.get("ESTADO_FILE", BASE / "estado.json"))
