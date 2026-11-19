@@ -90,7 +90,7 @@ def buscar_voos(origem: str, destino: str, ida: str, volta: str | None = None) -
     return _exemplo(origem, destino, ida, volta)
 
 
-def _serpapi(origem, destino, ida, volta):
+def _serpapi_get(origem, destino, ida, volta, **extra):
     params = {
         "engine": "google_flights",
         "departure_id": origem,
@@ -104,12 +104,16 @@ def _serpapi(origem, destino, ida, volta):
     }
     if volta:
         params["return_date"] = volta
+    params.update(extra)
     url = "https://serpapi.com/search.json?" + urllib.parse.urlencode(params)
     with urllib.request.urlopen(url, timeout=60) as r:
         data = json.load(r)
     if "error" in data:
         raise RuntimeError(f"SerpApi: {data['error']}")
+    return data
 
+
+def _ler_voos(data):
     voos = []
     for grupo in (data.get("best_flights") or []) + (data.get("other_flights") or []):
         trechos = grupo.get("flights") or []
@@ -122,8 +126,16 @@ def _serpapi(origem, destino, ida, volta):
             "chegada": trechos[-1]["arrival_airport"].get("time", ""),
             "duracao_min": grupo.get("total_duration"),
             "escalas": len(trechos) - 1,
+            "booking_token": grupo.get("booking_token"),
+            "departure_token": grupo.get("departure_token"),
         })
     voos.sort(key=lambda v: v["preco"])
+    return voos
+
+
+def _serpapi(origem, destino, ida, volta):
+    data = _serpapi_get(origem, destino, ida, volta)
+    voos = _ler_voos(data)
 
     insight = None
     pi = data.get("price_insights") or {}
@@ -163,6 +175,66 @@ def _exemplo(origem, destino, ida, volta):
 def _link_google(origem, destino, ida, volta):
     q = f"voos de {origem} para {destino} em {ida}" + (f" volta {volta}" if volta else " só ida")
     return "https://www.google.com/travel/flights?hl=pt-BR&curr=BRL&q=" + urllib.parse.quote(q)
+
+
+def ofertas(origem, destino, ida, volta=None, booking_token=None, departure_token=None) -> list[dict]:
+    """Quem vende esse voo e o link pra comprar (via Google Flights / SerpApi).
+
+    Ida e volta: o 1º token (departure_token) escolhe a ida; busca a volta mais barata
+    e pega o booking_token dela. Gasta 1 busca (só ida) ou 2 (ida e volta).
+    """
+    if not os.environ.get("SERPAPI_KEY"):
+        return []
+    if not booking_token and departure_token:
+        voltas = _ler_voos(_serpapi_get(origem, destino, ida, volta, departure_token=departure_token))
+        booking_token = next((v["booking_token"] for v in voltas if v.get("booking_token")), None)
+    if not booking_token:
+        return []
+    data = _serpapi_get(origem, destino, ida, volta, booking_token=booking_token)
+    saida = []
+    for op in data.get("booking_options") or []:
+        partes = [op[k] for k in ("together", "departing", "returning") if op.get(k)]
+        for parte in partes[:1]:  # "together" = um bilhete só; senão mostra o da ida
+            req = parte.get("booking_request") or {}
+            if not req.get("url"):
+                continue
+            saida.append({
+                "vendedor": parte.get("book_with") or "?",
+                "cia": bool(parte.get("airline")),
+                "preco": parte.get("price"),
+                "titulo": parte.get("option_title"),
+                "bagagem": parte.get("baggage_prices") or [],
+                "url": req["url"],
+                "post_data": req.get("post_data") or "",
+                "separado": "together" not in op,
+            })
+    saida.sort(key=lambda o: (o["preco"] is None, o["preco"] or 0))
+    return saida
+
+
+def links_cias(origem, destino, ida, volta=None) -> dict:
+    """Busca já preenchida direto no site das companhias (não garante o mesmo preço)."""
+    o, d = origem.split(",")[0], destino.split(",")[0]
+    di = dt.date.fromisoformat(ida)
+    dv = dt.date.fromisoformat(volta) if volta else None
+    latam = (f"https://www.latamairlines.com/br/pt/oferta-voos?origin={o}&destination={d}"
+             f"&outbound={ida}T12%3A00%3A00.000Z&adt=1&chd=0&inf=0&cabin=Economy&redemption=false"
+             + (f"&inbound={volta}T12%3A00%3A00.000Z&trip=RT" if volta else "&trip=OW"))
+    azul = (f"https://www.voeazul.com.br/br/pt/home/selecao-voo?c[0].ds={o}&c[0].std={di:%m/%d/%Y}&c[0].as={d}"
+            + (f"&c[1].ds={d}&c[1].std={dv:%m/%d/%Y}&c[1].as={o}" if dv else "")
+            + "&p[0].t=ADT&p[0].c=1&p[0].cp=false&f.dl=3&f.dr=3&cc=BRL")
+    gol = (f"https://b2c.voegol.com.br/compra/busca-parceiros?pv=br&tipo={'RT' if volta else 'OW'}"
+           f"&de={o}&para={d}&ida={di:%d-%m-%Y}" + (f"&volta={dv:%d-%m-%Y}" if dv else "") + "&ADT=1&CHD=0&INF=0")
+    return {"LATAM": latam, "Azul": azul, "GOL": gol}
+
+
+def link_cia(nome_cia, origem, destino, ida, volta=None):
+    n = nome_cia.lower()
+    links = links_cias(origem, destino, ida, volta)
+    for chave in links:
+        if chave.lower() in n:
+            return chave, links[chave]
+    return None
 
 
 def buscar_datas(origem, destino, datas_ida, volta=None) -> dict:
@@ -362,6 +434,10 @@ def formatar_resultado(origem, destino, ida, volta, res, limite=5) -> str:
         linhas.append(f"📊 {res['insight']}")
     outros = links_outros_sites(origem, destino, ida, volta)
     outros["Google Flights"] = res["link"]
+    if res["voos"]:
+        lc = link_cia(" ".join(res["voos"][0]["cias"]), origem, destino, ida, volta)
+        if lc:
+            outros = {f"Comprar na {lc[0]}": lc[1], **outros}
     linhas.append(" · ".join(f'<a href="{u}">{n}</a>' for n, u in outros.items()))
     linhas.append(f"fonte: {res['fonte']}")
     return "\n".join(linhas)

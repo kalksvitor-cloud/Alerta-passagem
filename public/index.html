@@ -76,6 +76,13 @@
           animation: g 0.8s linear infinite; margin: 0 auto 10px; }
   @keyframes g { to { transform: rotate(360deg); } }
   .esconde { display: none !important; }
+  .btn-preco { border: 0; background: none; padding: 6px 0 6px 10px; text-align: right; color: inherit; cursor: pointer; }
+  .btn-preco small { display: block; font-size: 12px; color: var(--azul); font-weight: 700; }
+  .ofertas { padding: 4px 0 12px; }
+  .oferta { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left;
+            padding: 10px 12px; margin-top: 6px; border-radius: 10px; border: 1px solid var(--borda);
+            background: var(--fundo); color: var(--texto); font-size: 15px; text-decoration: none; cursor: pointer; }
+  .oferta b { color: var(--verde); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -126,7 +133,7 @@
       <button class="btn" id="btn-aviso">Criar aviso</button>
       <div class="sub" style="margin-top:8px">Com "Até", ele procura o dia mais barato nesse intervalo (máx. 15 dias). Cada dia gasta uma busca do seu plano grátis.</div>
     </form>
-    <div class="sub" style="margin:0 2px 10px">O robô confere seus avisos às 8h e às 20h e manda no Telegram quando o preço baixa.</div>
+    <div class="sub" style="margin:0 2px 10px">O robô confere seus avisos a cada 30 minutos e manda no Telegram quando o preço baixa.</div>
     <div id="lista-alertas"></div>
   </section>
 
@@ -241,7 +248,9 @@ function mostrar(r, params) {
     const dur = v.duracao_min ? `${Math.floor(v.duracao_min / 60)}h${String(v.duracao_min % 60).padStart(2, "0")}` : "";
     const escalas = v.escalas === 0 ? "direto" : v.escalas + (v.escalas > 1 ? " escalas" : " escala");
     h += `<div class="voo ${i === 0 ? "top" : ""}"><div><div><b>${esc(v.cias.join(", "))}</b> ${i === 0 ? '<span class="tag">mais barato</span>' : ""}</div>
-          <div class="sub">${hora}${cheg} · ${escalas}${dur ? " · " + dur : ""}</div></div><div class="preco">${brl(v.preco)}</div></div>`;
+          <div class="sub">${hora}${cheg} · ${escalas}${dur ? " · " + dur : ""}</div></div>
+          <button class="btn-preco" onclick="verOfertas(${i})"><span class="preco">${brl(v.preco)}</span><small>Comprar ›</small></button></div>
+          <div class="ofertas esconde" id="ofertas-${i}"></div>`;
   });
   h += `<div class="links">${Object.entries(m.links).map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join("")}</div>
         <div class="sub" style="margin-top:8px">Os preços podem mudar no site da companhia. Fonte: ${esc(m.fonte)}</div></div>`;
@@ -252,6 +261,50 @@ function mostrar(r, params) {
         <div class="linha"><div><label for="alvo">Preço máximo (R$)</label><input id="alvo" type="number" inputmode="numeric" value="${sugestao}"></div></div>
         <div style="margin-top:12px"><button class="btn sec" id="btn-alerta" onclick="criarAlerta()">Criar aviso</button></div></div>`;
   $("resultado").innerHTML = h;
+}
+
+async function verOfertas(i) {
+  const caixa = $("ofertas-" + i);
+  if (!caixa.classList.contains("esconde") && caixa.dataset.ok) { caixa.classList.add("esconde"); return; }
+  caixa.classList.remove("esconde");
+  const { r } = ultimaBusca, m = r.melhor, v = m.voos[i];
+  if (caixa.dataset.ok) return;
+  caixa.innerHTML = `<div class="sub">Procurando quem vende esse preço...</div>`;
+  const params = { origem: r.origem, destino: r.destino, data: m.data };
+  if (r.volta) params.volta = r.volta;
+  if (v.booking_token) params.booking_token = v.booking_token;
+  else if (v.departure_token) params.departure_token = v.departure_token;
+  let ofertas = [], cias = {};
+  try { ({ ofertas, cias } = await api("ofertas", params)); } catch (err) { /* cai nos links diretos */ }
+  window._ofertas = window._ofertas || {};
+  window._ofertas[i] = ofertas;
+  let h = "";
+  if (ofertas.length) {
+    h += `<div class="sub">Toque pra ir direto ao site com esse preço:</div>`;
+    ofertas.slice(0, 6).forEach((o, k) => {
+      const extra = [o.titulo, o.separado ? "bilhetes separados" : ""].filter(Boolean).join(" · ");
+      h += `<button class="oferta" onclick="comprar(${i},${k})"><span>${o.cia ? "✈️" : "🏷️"} <b style="color:var(--texto)">${esc(o.vendedor)}</b>
+            ${extra ? `<br><span class="sub">${esc(extra)}</span>` : ""}</span><b>${brl(o.preco)} ↗</b></button>`;
+    });
+  } else {
+    h += `<div class="sub">Não consegui o link direto desse voo. Abra a busca já preenchida na companhia:</div>`;
+  }
+  const nomeCia = v.cias.join(" ").toLowerCase();
+  const ciasOrdenadas = Object.entries(cias).sort(([a], [b]) => nomeCia.includes(b.toLowerCase()) - nomeCia.includes(a.toLowerCase()));
+  if (!ofertas.length) h += ciasOrdenadas.map(([n, u]) => `<a class="oferta" href="${esc(u)}" target="_blank" rel="noopener"><span>Buscar na ${esc(n)}</span><b>↗</b></a>`).join("");
+  caixa.innerHTML = h;
+  caixa.dataset.ok = "1";
+}
+
+// O Google pede um POST com os dados da oferta; ele redireciona pro site de quem vende.
+function comprar(i, k) {
+  const o = window._ofertas[i][k];
+  const f = document.createElement("form");
+  f.method = "POST"; f.action = o.url; f.target = "_blank";
+  for (const [nome, valor] of new URLSearchParams(o.post_data)) {
+    const inp = document.createElement("input"); inp.type = "hidden"; inp.name = nome; inp.value = valor; f.appendChild(inp);
+  }
+  document.body.appendChild(f); f.submit(); f.remove();
 }
 
 async function criarAlerta() {

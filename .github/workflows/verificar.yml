@@ -22,13 +22,17 @@ jobs:
         with: { python-version: "3.12" }
       - name: Responder mensagens do Telegram
         run: python passagens.py mensagens
-      - name: Verificar alertas (08h e 20h de Brasília, ou rodando à mão)
+      - name: Verificar avisos
+        env:
+          # De quantos em quantos minutos conferir os avisos (30, 60, 120, 180...).
+          # Cada conferência gasta 1 busca do SerpApi por data de cada aviso.
+          INTERVALO_MIN: "30"
         run: |
-          HORA=$(TZ=America/Sao_Paulo date +%H); MIN=$(date +%M)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { { [ "$HORA" = "08" ] || [ "$HORA" = "20" ]; } && [ "$MIN" -lt 30 ]; }; then
+          AGORA=$(( 10#$(TZ=America/Sao_Paulo date +%H) * 60 + 10#$(date +%M) ))
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ $(( AGORA % INTERVALO_MIN )) -lt 30 ]; then
             python passagens.py verificar
           else
-            echo "Fora do horário de verificação ($HORA h)."
+            echo "Ainda não é hora de conferir (a cada $INTERVALO_MIN min)."
           fi
       - name: Salvar alertas e histórico
         if: always()

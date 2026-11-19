@@ -66,6 +66,12 @@ class handler(BaseHTTPRequestHandler):
         try:
             if acao == "buscar":
                 return self._responder(200, buscar(q))
+            if acao == "ofertas":
+                volta = q.get("volta") or None
+                lista = p.ofertas(p.aeroporto(q["origem"]), p.aeroporto(q["destino"]), q["data"], volta,
+                                  q.get("booking_token"), q.get("departure_token"))
+                return self._responder(200, {"ofertas": lista,
+                                             "cias": p.links_cias(q["origem"], q["destino"], q["data"], volta)})
             if acao == "alertas":
                 return self._responder(200, alertas())
             if acao == "criar":
