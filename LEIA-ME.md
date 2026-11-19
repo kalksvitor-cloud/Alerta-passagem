@@ -63,7 +63,7 @@ desde a última busca, ou o menor preço já visto para aquela rota.
 
 1. Crie um repositório **privado** no GitHub e suba estes arquivos.
 2. Em *Settings → Secrets and variables → Actions*, crie `SERPAPI_KEY`, `TELEGRAM_TOKEN` e `TELEGRAM_CHAT_ID`.
-3. O GitHub vai verificar a cada 30 minutos (mude INTERVALO_MIN no workflow) e mandar os alertas. Nesse modo você cadastra alertas editando o
+3. O GitHub vai verificar a cada 3 horas, das 6h às 21h (mude INTERVALO_MIN e COMECA_AS no workflow) e mandar os alertas. Nesse modo você cadastra alertas editando o
    `alertas.json` direto no GitHub (o bot interativo só funciona quando roda no PC).
 
 ## Uso pelo terminal (sem Telegram)

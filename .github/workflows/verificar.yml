@@ -26,10 +26,12 @@ jobs:
         env:
           # De quantos em quantos minutos conferir os avisos (30, 60, 120, 180...).
           # Cada conferência gasta 1 busca do SerpApi por data de cada aviso.
-          INTERVALO_MIN: "30"
+          INTERVALO_MIN: "180"
+          # Não confere de madrugada (antes desse horário), pra economizar buscas do plano grátis.
+          COMECA_AS: "6"
         run: |
-          AGORA=$(( 10#$(TZ=America/Sao_Paulo date +%H) * 60 + 10#$(date +%M) ))
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ $(( AGORA % INTERVALO_MIN )) -lt 30 ]; then
+          HORA=$(( 10#$(TZ=America/Sao_Paulo date +%H) )); AGORA=$(( HORA * 60 + 10#$(date +%M) ))
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { [ $HORA -ge $COMECA_AS ] && [ $(( AGORA % INTERVALO_MIN )) -lt 30 ]; }; then
             python passagens.py verificar
           else
             echo "Ainda não é hora de conferir (a cada $INTERVALO_MIN min)."
