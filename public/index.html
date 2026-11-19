@@ -35,6 +35,9 @@
   input { width: 100%; padding: 11px 12px; font-size: 16px; border-radius: 10px; border: 1px solid var(--borda);
           background: var(--fundo); color: var(--texto); }
   .campo { margin-bottom: 12px; }
+  input[type="date"] { -webkit-appearance: none; appearance: none; display: block; max-width: 100%;
+                       min-height: 46px; text-align: left; }
+  input[type="date"]::-webkit-date-and-time-value { text-align: left; }
   .troca { flex: 0 0 44px; align-self: end; height: 44px; border-radius: 10px; border: 1px solid var(--borda);
            background: var(--fundo); color: var(--texto); font-size: 18px; }
   .chk { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; font-size: 15px; }
