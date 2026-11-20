@@ -1,5 +1,5 @@
 {
   "functions": {
-    "api/app.py": { "maxDuration": 60, "includeFiles": "passagens.py" }
+    "api/app.py": { "maxDuration": 60, "includeFiles": "*.py" }
   }
 }

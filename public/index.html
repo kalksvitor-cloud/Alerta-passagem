@@ -101,7 +101,7 @@
       <div class="linha campo">
         <div><label for="origem">De</label><input id="origem" list="cidades" placeholder="BH, CNF..." required></div>
         <button type="button" class="troca" onclick="trocar()" aria-label="Trocar origem e destino">⇄</button>
-        <div><label for="destino">Para</label><input id="destino" list="cidades" placeholder="Curitiba, CWB..." required></div>
+        <div><label for="destino">Para</label><input id="destino" list="cidades" placeholder="Curitiba, Tóquio, NRT..." required></div>
       </div>
       <div class="linha campo">
         <div><label for="ida" id="lbl-ida">Ida</label><input id="ida" type="date" required></div>
@@ -138,15 +138,148 @@
   </section>
 
   <datalist id="cidades">
-    <option value="CNF · Belo Horizonte"><option value="PLU · Belo Horizonte Pampulha">
-    <option value="GRU,CGH · São Paulo"><option value="GRU · São Paulo Guarulhos"><option value="CGH · São Paulo Congonhas">
-    <option value="VCP · Campinas"><option value="GIG,SDU · Rio de Janeiro"><option value="GIG · Rio Galeão"><option value="SDU · Rio Santos Dumont">
-    <option value="CWB · Curitiba"><option value="FLN · Florianópolis"><option value="POA · Porto Alegre"><option value="IGU · Foz do Iguaçu">
-    <option value="BSB · Brasília"><option value="GYN · Goiânia"><option value="SSA · Salvador"><option value="REC · Recife">
-    <option value="FOR · Fortaleza"><option value="NAT · Natal"><option value="MCZ · Maceió"><option value="JPA · João Pessoa">
-    <option value="BPS · Porto Seguro"><option value="VIX · Vitória"><option value="MAO · Manaus"><option value="BEL · Belém">
-    <option value="CGB · Cuiabá"><option value="CGR · Campo Grande"><option value="UDI · Uberlândia"><option value="MOC · Montes Claros">
-    <option value="EZE,AEP · Buenos Aires"><option value="SCL · Santiago"><option value="LIS · Lisboa"><option value="MCO · Orlando"><option value="MIA · Miami">
+    <option value="CNF · Belo Horizonte">
+    <option value="PLU · Belo Horizonte Pampulha">
+    <option value="GRU,CGH · São Paulo">
+    <option value="GRU · São Paulo Guarulhos">
+    <option value="CGH · São Paulo Congonhas">
+    <option value="VCP · Campinas">
+    <option value="GIG,SDU · Rio de Janeiro">
+    <option value="GIG · Rio Galeão">
+    <option value="SDU · Rio Santos Dumont">
+    <option value="CWB · Curitiba">
+    <option value="FLN · Florianópolis">
+    <option value="POA · Porto Alegre">
+    <option value="IGU · Foz do Iguaçu">
+    <option value="NVT · Navegantes">
+    <option value="BSB · Brasília">
+    <option value="GYN · Goiânia">
+    <option value="CGB · Cuiabá">
+    <option value="CGR · Campo Grande">
+    <option value="SSA · Salvador">
+    <option value="BPS · Porto Seguro">
+    <option value="IOS · Ilhéus">
+    <option value="REC · Recife">
+    <option value="FOR · Fortaleza">
+    <option value="NAT · Natal">
+    <option value="MCZ · Maceió">
+    <option value="JPA · João Pessoa">
+    <option value="AJU · Aracaju">
+    <option value="SLZ · São Luís">
+    <option value="THE · Teresina">
+    <option value="FEN · Fernando de Noronha">
+    <option value="VIX · Vitória">
+    <option value="UDI · Uberlândia">
+    <option value="MOC · Montes Claros">
+    <option value="JDF,IZA · Juiz de Fora">
+    <option value="RAO · Ribeirão Preto">
+    <option value="LDB · Londrina">
+    <option value="MGF · Maringá">
+    <option value="MAO · Manaus">
+    <option value="BEL · Belém">
+    <option value="PVH · Porto Velho">
+    <option value="PMW · Palmas">
+    <option value="JJD · Jericoacoara">
+    <option value="EZE,AEP · Buenos Aires">
+    <option value="BRC · Bariloche">
+    <option value="MDZ · Mendoza">
+    <option value="SCL · Santiago">
+    <option value="MVD · Montevidéu">
+    <option value="PDP · Punta del Este">
+    <option value="LIM · Lima">
+    <option value="CUZ · Cusco">
+    <option value="BOG · Bogotá">
+    <option value="CTG · Cartagena">
+    <option value="MDE · Medellín">
+    <option value="ADZ · San Andrés">
+    <option value="ASU · Assunção">
+    <option value="LPB · La Paz">
+    <option value="VVI · Santa Cruz de la Sierra">
+    <option value="UIO · Quito">
+    <option value="CCS · Caracas">
+    <option value="CUN · Cancún">
+    <option value="MEX · Cidade do México">
+    <option value="PUJ · Punta Cana">
+    <option value="HAV · Havana">
+    <option value="PTY · Cidade do Panamá">
+    <option value="SJO · San José">
+    <option value="AUA · Aruba">
+    <option value="CUR · Curaçao">
+    <option value="MIA · Miami">
+    <option value="MCO · Orlando">
+    <option value="FLL · Fort Lauderdale">
+    <option value="JFK,EWR,LGA · Nova York">
+    <option value="BOS · Boston">
+    <option value="IAD,DCA · Washington">
+    <option value="ORD · Chicago">
+    <option value="ATL · Atlanta">
+    <option value="DFW · Dallas">
+    <option value="IAH · Houston">
+    <option value="LAS · Las Vegas">
+    <option value="LAX · Los Angeles">
+    <option value="SFO · São Francisco">
+    <option value="SEA · Seattle">
+    <option value="YYZ · Toronto">
+    <option value="YUL · Montreal">
+    <option value="YVR · Vancouver">
+    <option value="LIS · Lisboa">
+    <option value="OPO · Porto (Portugal)">
+    <option value="MAD · Madri">
+    <option value="BCN · Barcelona">
+    <option value="CDG,ORY · Paris">
+    <option value="LHR,LGW,STN,LTN · Londres">
+    <option value="DUB · Dublin">
+    <option value="AMS · Amsterdã">
+    <option value="BRU · Bruxelas">
+    <option value="FRA · Frankfurt">
+    <option value="MUC · Munique">
+    <option value="BER · Berlim">
+    <option value="ZRH · Zurique">
+    <option value="GVA · Genebra">
+    <option value="VIE · Viena">
+    <option value="FCO · Roma">
+    <option value="MXP,LIN · Milão">
+    <option value="VCE · Veneza">
+    <option value="ATH · Atenas">
+    <option value="IST · Istambul">
+    <option value="PRG · Praga">
+    <option value="BUD · Budapeste">
+    <option value="CPH · Copenhague">
+    <option value="ARN · Estocolmo">
+    <option value="OSL · Oslo">
+    <option value="HEL · Helsinque">
+    <option value="KEF · Reykjavik">
+    <option value="DXB · Dubai">
+    <option value="AUH · Abu Dhabi">
+    <option value="DOH · Doha">
+    <option value="TLV · Tel Aviv">
+    <option value="CAI · Cairo">
+    <option value="RAK · Marrakech">
+    <option value="CMN · Casablanca">
+    <option value="CPT · Cidade do Cabo">
+    <option value="JNB · Joanesburgo">
+    <option value="LAD · Luanda">
+    <option value="HND,NRT · Tóquio">
+    <option value="KIX,ITM · Osaka">
+    <option value="ICN · Seul">
+    <option value="PEK,PKX · Pequim">
+    <option value="PVG · Xangai">
+    <option value="HKG · Hong Kong">
+    <option value="TPE · Taipé">
+    <option value="BKK · Bangkok">
+    <option value="HKT · Phuket">
+    <option value="SIN · Singapura">
+    <option value="DPS · Bali">
+    <option value="KUL · Kuala Lumpur">
+    <option value="MNL · Manila">
+    <option value="HAN · Hanói">
+    <option value="SGN · Ho Chi Minh">
+    <option value="DEL · Nova Délhi">
+    <option value="BOM · Mumbai">
+    <option value="MLE · Maldivas">
+    <option value="SYD · Sydney">
+    <option value="MEL · Melbourne">
+    <option value="AKL · Auckland">
   </datalist>
 </main>
 

@@ -35,6 +35,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 BASE = Path(__file__).resolve().parent
 
 # Tira espaços/quebras de linha que às vezes vêm junto ao colar as chaves.
@@ -47,23 +49,20 @@ ALERTAS_FILE = Path(os.environ.get("ALERTAS_FILE", BASE / "alertas.json"))
 HISTORICO_FILE = Path(os.environ.get("HISTORICO_FILE", BASE / "historico.json"))
 ESTADO_FILE = Path(os.environ.get("ESTADO_FILE", BASE / "estado.json"))
 
-# Apelidos comuns -> código IATA. Pode digitar o código direto também.
-APELIDOS = {
-    "bh": "CNF", "belo horizonte": "CNF", "confins": "CNF", "pampulha": "PLU",
-    "curitiba": "CWB", "sp": "GRU,CGH", "sao paulo": "GRU,CGH", "são paulo": "GRU,CGH",
-    "guarulhos": "GRU", "congonhas": "CGH", "rio": "GIG,SDU", "rio de janeiro": "GIG,SDU",
-    "brasilia": "BSB", "brasília": "BSB", "salvador": "SSA", "recife": "REC",
-    "fortaleza": "FOR", "porto alegre": "POA", "floripa": "FLN", "florianopolis": "FLN",
-    "florianópolis": "FLN", "natal": "NAT", "maceio": "MCZ", "maceió": "MCZ",
-    "manaus": "MAO", "belem": "BEL", "belém": "BEL", "goiania": "GYN", "goiânia": "GYN",
-    "vitoria": "VIX", "vitória": "VIX", "campinas": "VCP", "foz": "IGU",
-    "foz do iguacu": "IGU", "foz do iguaçu": "IGU", "porto seguro": "BPS",
-}
-
-
 def aeroporto(txt: str) -> str:
+    """'Tóquio', 'japao', 'NRT', 'HND,NRT', 'NRT · Tóquio' ou 'Tóquio (HND,NRT)' -> código(s) IATA."""
+    import re
+    from cidades import INDICE, normalizar
     t = txt.strip()
-    return APELIDOS.get(t.lower(), t.upper())
+    m = re.match(r"^([A-Za-z]{3}(?:,[A-Za-z]{3})*)\s*·", t) or re.search(r"\(([A-Za-z]{3}(?:,[A-Za-z]{3})*)\)\s*$", t)
+    if m:
+        return m.group(1).upper()
+    if normalizar(t) in INDICE:
+        return INDICE[normalizar(t)]
+    if re.fullmatch(r"[A-Za-z]{3}(,[A-Za-z]{3})*", t):
+        return t.upper()
+    raise ValueError(f"Não conheço \"{t}\". Escolha uma cidade da lista ou digite o código do aeroporto "
+                     "com 3 letras (ex.: NRT para Tóquio).")
 
 
 def brl(v: float | None) -> str:
@@ -173,6 +172,7 @@ def _exemplo(origem, destino, ida, volta):
 
 
 def _link_google(origem, destino, ida, volta):
+    origem, destino = origem.split(",")[0], destino.split(",")[0]
     q = f"voos de {origem} para {destino} em {ida}" + (f" volta {volta}" if volta else " só ida")
     return "https://www.google.com/travel/flights?hl=pt-BR&curr=BRL&q=" + urllib.parse.quote(q)
 
