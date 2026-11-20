@@ -47,7 +47,7 @@ Enquanto ele estiver ligado, você conversa com ele no Telegram e ele verifica s
 | Comando | O que faz |
 |---|---|
 | `/buscar bh curitiba 15/01/2027` | Mostra os voos mais baratos desse dia |
-| `/buscar bh curitiba 10/01/2027:20/01/2027` | Acha o **dia** mais barato na faixa (até 15 dias) |
+| `/buscar bh curitiba 10/01/2027:20/01/2027` | Acha o **dia** mais barato na faixa (até 30 dias) |
 | `/buscar bh curitiba 15/01/2027 20/01/2027` | Ida e volta |
 | `/alertar bh curitiba 15/01/2027 400` | Avisa quando ficar até R$ 400 |
 | `/lista` | Seus alertas |

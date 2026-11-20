@@ -108,6 +108,7 @@
         <div id="box-ate" class="esconde"><label for="ate">Até</label><input id="ate" type="date"></div>
       </div>
       <label class="chk"><input type="checkbox" id="flex" onchange="flexivel()"> Datas flexíveis (acha o dia mais barato)</label>
+      <div class="sub esconde" id="custo" style="margin:-6px 0 12px"></div>
       <label class="chk"><input type="checkbox" id="idavolta" onchange="idaVolta()"> Ida e volta</label>
       <div class="campo esconde" id="box-volta"><label for="volta">Volta</label><input id="volta" type="date"></div>
       <button class="btn" id="btn-buscar">Pesquisar</button>
@@ -131,7 +132,7 @@
         <div><label for="a-preco">Quero pagar até (R$)</label><input id="a-preco" type="number" inputmode="numeric" placeholder="400" required></div>
       </div>
       <button class="btn" id="btn-aviso">Criar aviso</button>
-      <div class="sub" style="margin-top:8px">Com "Até", ele procura o dia mais barato nesse intervalo (máx. 15 dias). Cada dia gasta uma busca do seu plano grátis.</div>
+      <div class="sub" style="margin-top:8px">Com "Até", ele procura o dia mais barato nesse intervalo (máx. 30 dias). Atenção: cada dia do intervalo gasta 6 buscas por dia do plano grátis. Pra aviso, o ideal é uma data só.</div>
     </form>
     <div class="sub" style="margin:0 2px 10px">O robô confere seus avisos às 6h, 9h, 12h, 15h, 18h e 21h e manda no Telegram quando o preço baixa.</div>
     <div id="lista-alertas"></div>
@@ -320,7 +321,13 @@ function aba(qual) {
   if (qual === "alertas") carregarAlertas();
 }
 function trocar() { const o = $("origem").value; $("origem").value = $("destino").value; $("destino").value = o; }
-function flexivel() { const f = $("flex").checked; $("box-ate").classList.toggle("esconde", !f); $("lbl-ida").textContent = f ? "Ida a partir de" : "Ida"; }
+function flexivel() { const f = $("flex").checked; $("box-ate").classList.toggle("esconde", !f); $("lbl-ida").textContent = f ? "Ida a partir de" : "Ida"; custo(); }
+function custo() {
+  const n = Math.round((new Date($("ate").value) - new Date($("ida").value)) / 864e5) + 1;
+  const el = $("custo");
+  el.classList.toggle("esconde", !$("flex").checked || !(n > 1));
+  el.textContent = `Essa pesquisa gasta ${n} buscas do seu plano (o grátis tem cerca de 250 por mês).`;
+}
 function idaVolta() { $("box-volta").classList.toggle("esconde", !$("idavolta").checked); }
 function carregando(msg) { return `<div class="card carregando"><div class="spin"></div>${msg}</div>`; }
 
@@ -331,7 +338,7 @@ $("form").addEventListener("submit", async (e) => {
     const ate = $("ate").value;
     if (!ate) return alertaErro("Escolha até que dia procurar.");
     const dias = (new Date(ate) - new Date(data)) / 864e5;
-    if (dias < 0 || dias > 14) return alertaErro("A faixa de datas pode ter no máximo 15 dias.");
+    if (dias < 0 || dias > 29) return alertaErro("A faixa de datas pode ter no máximo 30 dias.");
     if (dias > 0) data += ":" + ate;
   }
   const params = { origem: codigo($("origem").value), destino: codigo($("destino").value), data };
@@ -482,7 +489,8 @@ $("form-aviso").addEventListener("submit", async (e) => {
   const ate = $("a-ate").value;
   if (ate && ate !== datas) {
     const dias = (new Date(ate) - new Date(datas)) / 864e5;
-    if (dias < 0 || dias > 14) return alert("O intervalo pode ter no máximo 15 dias.");
+    if (dias < 0 || dias > 29) return alert("O intervalo pode ter no máximo 30 dias.");
+    if (dias + 1 > 1 && !confirm(`Esse aviso confere ${dias + 1} dias, 6 vezes por dia: gasta umas ${(dias + 1) * 180} buscas por mês, e o plano grátis tem cerca de 250. Ele vai parar de funcionar em poucos dias. Criar mesmo assim?`)) return;
     datas += ":" + ate;
   }
   const btn = $("btn-aviso"); btn.disabled = true; btn.textContent = "Criando...";
@@ -500,6 +508,7 @@ async function removerAlerta(id) {
   try { await api("remover", {}, { id }); carregarAlertas(); } catch (err) { alert(err.message); }
 }
 
+$("ida").addEventListener("change", custo); $("ate").addEventListener("change", custo);
 // Valores iniciais
 (() => {
   const hoje = new Date(); hoje.setDate(hoje.getDate() + 30);

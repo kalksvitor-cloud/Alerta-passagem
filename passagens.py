@@ -342,12 +342,12 @@ def carregar_historico() -> dict:
 
 
 def expandir_datas(spec: str) -> list[str]:
-    """'2027-01-15' ou '2027-01-10:2027-01-20' (no máx. 15 dias)."""
+    """'2027-01-15' ou '2027-01-10:2027-01-20' (no máx. 30 dias)."""
     if ":" in spec:
         a, b = (dt.date.fromisoformat(x) for x in spec.split(":"))
         dias = (b - a).days
-        if dias < 0 or dias > 14:
-            raise ValueError("Faixa de datas deve ter de 1 a 15 dias.")
+        if dias < 0 or dias > 29:
+            raise ValueError("Faixa de datas deve ter de 1 a 30 dias.")
         return [(a + dt.timedelta(days=i)).isoformat() for i in range(dias + 1)]
     dt.date.fromisoformat(spec)
     return [spec]
