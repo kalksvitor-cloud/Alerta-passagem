@@ -90,8 +90,13 @@
         "quando": "2026-11-28T09:27",
         "data": "2026-11-30",
         "preco": 2326.0
+      },
+      {
+        "quando": "2026-11-28T12:20",
+        "data": "2026-11-30",
+        "preco": 1904.0
       }
     ],
-    "ultimo_alerta": null
+    "ultimo_alerta": 1904.0
   }
 }
